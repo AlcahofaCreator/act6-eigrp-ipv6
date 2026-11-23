@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Configuración de EIGRP para IPv6 · Redes III · Juan Manuel Torres Jimenez</title>
+<style>
+:root{--g:#7A0026;--g2:#A3123F;--gt:#F7E8EE;--gr:#F1F1F4;--gr2:#DCDCE3;--ink:#1E1E26;--mu:#55556A;--code:#1C1B22}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);
+  background:radial-gradient(circle at 30% 20%,#F6F6F9 0,#E6E6EC 55%,#D6D6DF 100%);-webkit-font-smoothing:antialiased}
+#stage{position:fixed;inset:0;overflow:hidden;cursor:pointer}
+#world{position:absolute;left:0;top:0;transform-origin:0 0}
+#bg{position:absolute;overflow:visible;pointer-events:none}
+.slide{position:absolute;left:0;top:0;width:1600px;height:900px;background:#fff;border-radius:26px;overflow:hidden;
+  transform-origin:800px 450px;box-shadow:0 30px 80px rgba(70,0,25,.18),0 4px 14px rgba(0,0,0,.08)}
+.slide::before{content:"";position:absolute;left:0;top:0;right:0;height:10px;background:linear-gradient(90deg,var(--g),var(--g2) 70%,#C94A6E)}
+body.ov .slide{cursor:zoom-in}
+body.ov .slide:hover{box-shadow:0 0 0 14px var(--g2),0 30px 80px rgba(70,0,25,.3)}
+/* cabecera / cuerpo / pie */
+.sh{position:absolute;left:70px;right:70px;top:40px;height:100px;display:flex;align-items:center;gap:24px;border-bottom:3px solid var(--gt)}
+.num{flex:none;width:70px;height:70px;border-radius:18px;background:var(--g);color:#fff;font-weight:800;font-size:29px;display:grid;place-items:center}
+.sh h2{font-size:44px;font-weight:800;letter-spacing:-.5px;line-height:1.05;color:var(--ink)}
+.kick{display:block;font-size:16px;font-weight:700;color:var(--g2);text-transform:uppercase;letter-spacing:2.5px;margin-bottom:5px}
+.sb{position:absolute;left:70px;right:70px;top:162px;bottom:60px}
+.sf{position:absolute;left:70px;right:70px;bottom:18px;height:26px;display:flex;justify-content:space-between;align-items:center;font-size:15px;color:#8A8A98}
+.sf b{color:var(--g);font-weight:700}
+/* utilidades */
+.row{display:flex;gap:28px}
+.col{display:flex;flex-direction:column;gap:18px}
+code,.m{font-family:Consolas,"Cascadia Mono","SF Mono",Menlo,"DejaVu Sans Mono",monospace}
+code{background:var(--gt);color:var(--g);padding:1px 7px;border-radius:6px;font-size:.9em;white-space:nowrap;font-weight:600}
+.card{background:var(--gr);border-radius:18px;padding:20px 22px}
+.card h3{font-size:23px;color:var(--g);margin-bottom:6px;line-height:1.15}
+.card p{font-size:18px;line-height:1.38;color:#33333F}
+.lead{font-size:24px;line-height:1.42;color:#2A2A35}
+.note{font-size:15.5px;color:var(--mu);line-height:1.35}
+.warn{display:inline-flex;align-items:center;gap:8px;background:#FFF1D6;color:#6B4300;border:2px solid #E7B24A;border-radius:10px;padding:6px 12px;font-size:15.5px;font-weight:700;line-height:1.25}
+.code{background:var(--code);border-radius:14px;color:#ECEAF0;padding:12px 20px 16px;box-shadow:inset 0 0 0 1px #34313E}
+.code .bar{display:flex;gap:7px;align-items:center;margin-bottom:8px;font-size:13.5px;color:#A29EB0;font-weight:600;letter-spacing:.3px}
+.code .bar i{width:11px;height:11px;border-radius:50%;background:#FF5F57}.code .bar i+i{background:#FEBC2E}.code .bar i+i+i{background:#28C840}
+.code .bar span{margin-left:8px}
+.code pre{font-family:Consolas,"Cascadia Mono","SF Mono",Menlo,"DejaVu Sans Mono",monospace;font-size:20px;line-height:1.5;white-space:pre}
+.p{color:#9C98AE}.k{color:#FFA3C2;font-weight:700}.o{color:#C9C6D4}.c{color:#8FD6A8}.h{background:#7A0026;color:#fff;border-radius:4px;padding:0 3px}
+table.t{width:100%;border-collapse:separate;border-spacing:0;font-size:18px}
+.t th{background:var(--g);color:#fff;text-align:left;padding:11px 16px;font-size:16px;letter-spacing:.6px;text-transform:uppercase}
+.t th:first-child{border-top-left-radius:12px}.t th:last-child{border-top-right-radius:12px}
+.t td{padding:10px 16px;border-bottom:1px solid var(--gr2);vertical-align:middle;line-height:1.3}
+.t tr:nth-child(even) td{background:#FBF7F9}
+.t td:first-child{font-weight:700;color:#2A2A35}
+.s2 .card{padding:26px 24px;min-height:330px;display:flex;flex-direction:column}
+.s2 .card svg{width:78px;height:78px;margin-bottom:10px}
+.s2 .card h3{font-size:27px;margin-bottom:10px}
+.s2 .card p{font-size:20px}
+.s2 .card p.note{margin-top:auto!important;font-size:17px;font-weight:700;color:var(--g2)}
+.s9 .t td{padding:17px 16px}.s9 .t th{padding:14px 16px}
+.s13 .card h3{font-size:27px;margin-bottom:8px}
+.s13 .card p{font-size:21px}
+.s13 .card{padding:24px 28px}
+svg text{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+svg .mono{font-family:Consolas,"Cascadia Mono",Menlo,monospace}
+/* animación de entrada */
+@keyframes rv{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.slide.on .rv{animation:rv .6s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--d,0)*110ms + 380ms)}
+/* portada */
+.cov-l{position:absolute;left:0;top:0;bottom:0;width:990px;background:linear-gradient(140deg,#8A0730 0,#7A0026 45%,#55001B 100%);color:#fff;padding:96px 80px 70px}
+.cov-r{position:absolute;left:990px;top:0;right:0;bottom:0;padding:70px 60px 50px;display:flex;flex-direction:column;align-items:center}
+.chip{display:inline-block;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:7px 18px;font-size:18px;font-weight:600;letter-spacing:1px}
+.cov-l h1{font-size:86px;line-height:1.02;font-weight:800;letter-spacing:-1.5px;margin:34px 0 26px}
+.cov-l .sub{font-size:27px;line-height:1.4;opacity:.92;max-width:800px}
+.tags{display:flex;flex-wrap:wrap;gap:12px;margin-top:40px}
+.tags span{font-family:Consolas,Menlo,monospace;font-size:19px;background:#fff;color:var(--g);border-radius:10px;padding:7px 14px;font-weight:700}
+.data{width:100%;margin-top:34px;border-top:3px solid var(--gt)}
+.data div{display:flex;justify-content:space-between;gap:16px;padding:11px 4px;border-bottom:1px solid var(--gr2);font-size:21px}
+.data dt,.data span:first-child{color:var(--mu)}
+.data b{color:var(--ink);text-align:right}
+/* controles */
+#ui{position:fixed;left:50%;bottom:9px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.94);
+  border-radius:999px;padding:5px 10px;box-shadow:0 6px 22px rgba(0,0,0,.14);z-index:10;font-size:14px;user-select:none}
+#ui button{border:0;background:transparent;cursor:pointer;color:var(--g);font-weight:800;font-size:17px;width:32px;height:30px;border-radius:999px}
+#ui button:hover{background:var(--gt)}
+#dots{display:flex;gap:6px;align-items:center;padding:0 4px}
+#dots button{width:11px;height:11px;padding:0;border-radius:6px;background:#C9C9D3;transition:background-color .3s}
+#dots button.act{background:var(--g);width:26px}
+#cnt{min-width:52px;text-align:center;color:#555;font-weight:700;font-variant-numeric:tabular-nums}
+#bar{position:fixed;left:0;top:0;height:4px;background:var(--g);z-index:11;transition:width .6s}
+#hint{position:fixed;right:14px;top:12px;background:rgba(30,30,38,.82);color:#fff;font-size:13px;padding:7px 12px;border-radius:9px;z-index:10;transition:opacity 1s;pointer-events:none}
+/* impresión: 1 diapositiva por hoja carta horizontal */
+@page{size:letter landscape;margin:0}
+@media print{
+  html,body{height:auto;overflow:visible;background:#fff}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #ui,#bar,#hint,#bg{display:none!important}
+  #stage{position:static;overflow:visible}
+  #world{position:static;transform:none!important}
+  .slide{position:relative;transform:none!important;zoom:.645;margin:180px auto 0;box-shadow:0 0 0 2px #E2E2E8;break-after:page;page-break-after:always}
+  .slide:last-child{break-after:auto;page-break-after:auto}
+  .slide .rv{animation:none!important;opacity:1!important;transform:none!important}
+}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<div id="hint">← → · espacio · clic · rueda del ratón · <b>O</b> = vista general</div>
+
+<!-- Símbolos SVG reutilizables (dibujados a mano) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="rt" viewBox="0 0 100 70">
+      <path d="M4 20 v30 a46 16 0 0 0 92 0 v-30" fill="#5E001D"/>
+      <ellipse cx="50" cy="20" rx="46" ry="16" fill="#A3123F"/>
+      <g stroke="#fff" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M24 12 l14 6 M38 18 l-6 1 M38 18 l-3 -5"/>
+        <path d="M76 28 l-14 -6 M62 22 l6 -1 M62 22 l3 5"/>
+        <path d="M62 10 l12 5 M74 15 l-6 1.5 M74 15 l-2.5 -5"/>
+        <path d="M38 30 l-12 -5 M26 25 l6 -1.5 M26 25 l2.5 5"/>
+      </g>
+    </symbol>
+    <symbol id="sw" viewBox="0 0 90 50">
+      <rect x="2" y="6" width="86" height="38" rx="6" fill="#4A4A58"/>
+      <rect x="2" y="2" width="86" height="12" rx="5" fill="#6B6B7B"/>
+      <g stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round">
+        <path d="M22 24 h46 M60 19 l8 5 l-8 5"/><path d="M68 35 h-46 M30 30 l-8 5 l8 5"/>
+      </g>
+    </symbol>
+    <symbol id="pc" viewBox="0 0 60 54">
+      <rect x="4" y="2" width="52" height="34" rx="4" fill="#4A4A58"/><rect x="9" y="7" width="42" height="24" rx="2" fill="#CFE3F7"/>
+      <rect x="24" y="36" width="12" height="9" fill="#6B6B7B"/><rect x="14" y="45" width="32" height="6" rx="3" fill="#4A4A58"/>
+    </symbol>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#7A0026"/></marker>
+    <marker id="arg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6A6A7A"/></marker>
+  </defs>
+</svg>
+
+<div id="stage"><div id="world">
+
+<!-- ================= 1. PORTADA ================= -->
+<section class="slide" data-x="0" data-y="0" data-s="1" data-r="0" data-title="Portada">
+  <div class="cov-l">
+    <svg style="position:absolute;right:-10px;bottom:-10px;opacity:.16" width="560" height="420" viewBox="0 0 560 420" aria-hidden="true">
+      <g stroke="#fff" stroke-width="3" fill="none"><path d="M80 330 L260 200 L470 300 L380 90 L260 200 M80 330 L180 90 L380 90 M470 300 L540 160"/></g>
+      <g fill="#fff"><circle cx="80" cy="330" r="16"/><circle cx="260" cy="200" r="22"/><circle cx="470" cy="300" r="16"/><circle cx="380" cy="90" r="18"/><circle cx="180" cy="90" r="12"/><circle cx="540" cy="160" r="10"/></g>
+    </svg>
+    <span class="chip rv">Redes III · CCNA · Actividad 6</span>
+    <h1 class="rv" style="--d:1">Configuración de<br>EIGRP para IPv6</h1>
+    <p class="sub rv" style="--d:2">Resumen: del repaso de EIGRP en IPv4 a la configuración y verificación de EIGRP para IPv6 en routers Cisco.</p>
+    <div class="tags rv" style="--d:3"><span>ipv6 unicast-routing</span><span>ipv6 router eigrp 1</span><span>ipv6 eigrp 1</span><span>FF02::A</span></div>
+  </div>
+  <div class="cov-r">
+    <img src="logo_ceti.png" alt="Logotipo del CETI" style="width:320px;height:auto" class="rv" draggable="false">
+    <div class="data rv" style="--d:2">
+      <div><span>Alumno</span><b>Juan Manuel Torres Jimenez</b></div>
+      <div><span>Registro</span><b>26110072</b></div>
+      <div><span>Grupo</span><b>2Pe</b></div>
+      <div><span>Materia</span><b>Redes III</b></div>
+      <div><span>Profesor</span><b>Ignacio Robles</b></div>
+      <div><span>Fecha</span><b>22 de noviembre de 2026</b></div>
+    </div>
+    <p class="note rv" style="--d:3;margin-top:auto;text-align:center">Centro de Enseñanza Técnica Industrial · Guadalajara</p>
+  </div>
+</section>
+
+<!-- ================= 2. OBJETIVO ================= -->
+<section class="slide" data-x="1950" data-y="650" data-s="1" data-r="-3" data-title="Objetivo">
+  <header class="sh"><div class="num">02</div><div><span class="kick">Introducción</span><h2>Objetivo de la presentación</h2></div></header>
+  <div class="sb col s2" style="gap:34px">
+    <p class="lead rv" style="font-size:32px;border-left:8px solid var(--g);padding:8px 0 8px 26px">Explicar <b>cómo se configura y se verifica EIGRP para IPv6</b> en routers Cisco, partiendo de lo que ya vimos de EIGRP en IPv4 y usando los comandos del material de clase.</p>
+    <div class="row" style="gap:20px">
+      <div class="card rv" style="--d:1;flex:1">
+        <svg width="64" height="64" viewBox="0 0 64 64"><rect x="8" y="10" width="22" height="44" rx="3" fill="#7A0026"/><rect x="34" y="10" width="22" height="44" rx="3" fill="#A3123F"/><path d="M13 20h12M13 28h12M39 20h12M39 28h12" stroke="#fff" stroke-width="3"/></svg>
+        <h3>1 · Repasar</h3><p>Fundamentos de EIGRP: DUAL, métrica, distancia administrativa y multicast.</p><p class="note" style="margin-top:10px">Diap. 3</p></div>
+      <div class="card rv" style="--d:2;flex:1">
+        <svg width="64" height="64" viewBox="0 0 64 64"><text x="2" y="30" font-size="20" font-weight="800" fill="#7A0026">v4</text><text x="30" y="56" font-size="20" font-weight="800" fill="#A3123F">v6</text><path d="M30 18h26M50 12l7 6-7 6M34 46H8M14 40l-7 6 7 6" stroke="#55556A" stroke-width="3" fill="none"/></svg>
+        <h3>2 · Comparar</h3><p>Qué cambia en IPv6: FF02::A, direcciones link-local y configuración por interfaz.</p><p class="note" style="margin-top:10px">Diap. 4 y 5</p></div>
+      <div class="card rv" style="--d:3;flex:1">
+        <svg width="64" height="64" viewBox="0 0 64 64"><circle cx="32" cy="32" r="21" fill="none" stroke="#7A0026" stroke-width="10" stroke-dasharray="8 5.2"/><circle cx="32" cy="32" r="16" fill="#7A0026"/><circle cx="32" cy="32" r="7" fill="#F1F1F4"/></svg>
+        <h3>3 · Configurar</h3><p>Routing IPv6, el proceso <code>ipv6 router eigrp 1</code> y <code>ipv6 eigrp 1</code> por interfaz.</p><p class="note" style="margin-top:10px">Diap. 6, 7, 8 y 10</p></div>
+      <div class="card rv" style="--d:4;flex:1">
+        <svg width="64" height="64" viewBox="0 0 64 64"><circle cx="27" cy="27" r="16" fill="none" stroke="#7A0026" stroke-width="7"/><path d="M39 39l15 15" stroke="#7A0026" stroke-width="9" stroke-linecap="round"/><path d="M20 27l5 5 9-10" stroke="#A3123F" stroke-width="4" fill="none"/></svg>
+        <h3>4 · Verificar</h3><p>Comandos <code>show ipv6 eigrp …</code> para confirmar vecinos, topología y rutas.</p><p class="note" style="margin-top:10px">Diap. 9, 10 y 11</p></div>
+      <div class="card rv" style="--d:5;flex:1">
+        <svg width="64" height="64" viewBox="0 0 64 64"><path d="M32 5l23 9v16c0 15-10 25-23 30C19 55 9 45 9 30V14z" fill="#7A0026"/><path d="M32 18v18M32 43v3" stroke="#fff" stroke-width="6" stroke-linecap="round"/></svg>
+        <h3>5 · Prevenir</h3><p>Errores comunes y buenas prácticas para que la red converja a la primera.</p><p class="note" style="margin-top:10px">Diap. 12</p></div>
+    </div>
+    <div class="rv" style="--d:6;background:var(--gt);border-radius:16px;padding:20px 28px;font-size:25px;color:var(--g)"><b>Pregunta guía:</b> ¿qué se conserva y qué cambia cuando EIGRP pasa de IPv4 a IPv6?</div>
+  </div>
+  <footer class="sf"><span>Redes III · EIGRP para IPv6 · <b>Juan Manuel Torres Jimenez</b></span><span>2 / 14</span></footer>
+</section>
+
+<!-- ================= 3. REPASO EIGRP ================= -->
+<section class="slide" data-x="3900" data-y="0" data-s="1" data-r="2" data-title="Repaso: ¿qué es EIGRP?">
+  <header class="sh"><div class="num">03</div><div><span class="kick">Repaso de clase (IPv4)</span><h2>¿Qué es EIGRP?</h2></div></header>
+  <div class="sb row" style="gap:34px">
+    <div class="col" style="width:690px;gap:14px">
+      <div class="card rv" style="--d:1;padding:16px 22px"><h3>Vector distancia avanzado</h3><p>Protocolo de Cisco (publicado como RFC 7868). Conoce rutas por sus vecinos, pero con actualizaciones parciales y limitadas, solo cuando hay cambios.</p></div>
+      <div class="card rv" style="--d:2;padding:16px 22px"><h3>Algoritmo DUAL</h3><p>Calcula el <b>sucesor</b> (mejor ruta) y el <b>sucesor factible</b> (respaldo sin bucles) para converger rápido.</p></div>
+      <div class="card rv" style="--d:3;padding:16px 22px"><h3>Distancia administrativa</h3><p><b>90</b> rutas internas · <b>170</b> rutas externas (redistribuidas) · 5 rutas resumidas.</p></div>
+      <div class="card rv" style="--d:4;padding:16px 22px"><h3>Multicast 224.0.0.10</h3><p>Dirección a la que envía Hello y actualizaciones en IPv4. Viaja como protocolo IP 88 y usa RTP para la entrega confiable.</p></div>
+      <div class="card rv" style="--d:5;padding:16px 22px"><h3>Cinco tipos de paquete</h3><p>Hello · Update · Query · Reply · Ack. Los Hello descubren y mantienen a los vecinos.</p></div>
+    </div>
+    <div class="rv" style="--d:3;flex:1">
+      <svg viewBox="0 0 740 650" width="100%" height="100%" role="img" aria-label="Diagrama de la métrica de EIGRP">
+        <text x="0" y="28" font-size="24" font-weight="800" fill="#1E1E26">Métrica compuesta (valores K por defecto: K1 = K3 = 1)</text>
+        <rect x="0" y="48" width="740" height="84" rx="16" fill="#F7E8EE"/>
+        <text x="370" y="100" font-size="25" font-weight="700" fill="#7A0026" text-anchor="middle">Métrica = 256 × ( 10⁷ / BW mínimo  +  Σ retardos / 10 )</text>
+        <text x="370" y="158" font-size="16" fill="#55556A" text-anchor="middle">BW en kbps · retardo en microsegundos (µs) · solo cuentan ancho de banda y retardo</text>
+        <!-- diagrama de ruta -->
+        <use href="#rt" x="30" y="210" width="130" height="91"/>
+        <text x="95" y="330" font-size="20" font-weight="800" text-anchor="middle">R2</text>
+        <use href="#rt" x="330" y="210" width="130" height="91"/>
+        <text x="395" y="330" font-size="20" font-weight="800" text-anchor="middle">R1</text>
+        <line x1="160" y1="245" x2="330" y2="245" stroke="#7A0026" stroke-width="6" stroke-dasharray="14 6"/>
+        <line x1="460" y1="245" x2="590" y2="245" stroke="#55556A" stroke-width="6"/>
+        <rect x="590" y="205" width="140" height="80" rx="12" fill="#F1F1F4" stroke="#C9C9D3" stroke-width="2"/>
+        <text x="660" y="240" font-size="18" font-weight="800" text-anchor="middle">LAN de R1</text>
+        <text x="660" y="265" font-size="15" fill="#55556A" text-anchor="middle">destino</text>
+        <text x="245" y="200" font-size="15" font-weight="700" fill="#7A0026" text-anchor="middle">Serial de R2</text>
+        <text x="245" y="225" font-size="15" fill="#33333F" text-anchor="middle">1 544 kbps · 20 000 µs</text>
+        <text x="525" y="200" font-size="15" font-weight="700" fill="#55556A" text-anchor="middle">G0/0 de R1</text>
+        <text x="525" y="225" font-size="15" fill="#33333F" text-anchor="middle">1 Gb/s · 10 µs</text>
+        <line x1="95" y1="350" x2="650" y2="350" stroke="#6A6A7A" stroke-width="2.5" marker-end="url(#arg)"/>
+        <text x="370" y="375" font-size="15" fill="#55556A" text-anchor="middle">R2 calcula la métrica de la ruta hacia la LAN de R1</text>
+        <!-- cálculo -->
+        <rect x="0" y="400" width="740" height="236" rx="16" fill="#fff" stroke="#DCDCE3" stroke-width="2"/>
+        <text x="24" y="440" font-size="18" fill="#33333F"><tspan font-weight="700">BW mínimo</tspan> = 1 544 kbps  →  10 000 000 / 1 544 = <tspan font-weight="700">6 476</tspan></text>
+        <text x="24" y="482" font-size="18" fill="#33333F"><tspan font-weight="700">Σ retardos</tspan> = 20 000 + 10 = 20 010 µs  →  20 010 / 10 = <tspan font-weight="700">2 001</tspan></text>
+        <rect x="16" y="505" width="708" height="58" rx="12" fill="#7A0026"/>
+        <text x="370" y="543" font-size="23" font-weight="800" fill="#fff" text-anchor="middle">Métrica = 256 × (6 476 + 2 001) = 2 170 112</text>
+        <text x="24" y="596" font-size="15" fill="#55556A">Los cocientes se truncan a entero. La fórmula es la misma en EIGRP para IPv4 y para IPv6.</text>
+        <text x="24" y="620" font-size="15" fill="#55556A">Ejemplo de cálculo con valores típicos de un serial T1 y una interfaz GigabitEthernet.</text>
+      </svg>
+    </div>
+  </div>
+  <footer class="sf"><span>Redes III · EIGRP para IPv6 · <b>Juan Manuel Torres Jimenez</b></span><span>3 / 14</span></footer>
+</section>
+
+<!-- ================= 4. EIGRP EN IPv6 ================= -->
+<section class="slide" data-x="5850" data-y="650" data-s="1" data-r="-2" data-title="EIGRP en IPv6">
+  <header class="sh"><div class="num">04</div><div><span class="kick">Lo nuevo</span><h2>EIGRP en IPv6: FF02::A y link-local</h2></div></header>
+  <div class="sb row" style="gap:34px">
+    <div class="col" style="width:620px;gap:14px">
+      <div class="card rv" style="--d:1"><h3>Mismo EIGRP, proceso aparte</h3><p>Conserva DUAL, la métrica y la AD 90 / 170, pero corre como un proceso independiente del de IPv4.</p></div>
+      <div class="card rv" style="--d:2"><h3>Multicast FF02::A</h3><p>Equivale a 224.0.0.10: «todos los routers EIGRP» del enlace. El prefijo FF02 indica alcance de enlace local.</p></div>
+      <div class="card rv" style="--d:3"><h3>Adyacencias con FE80::/10</h3><p>Los mensajes salen de la dirección <b>link-local</b> de la interfaz; el vecino y el siguiente salto de las rutas son link-local.</p></div>
+      <div class="card rv" style="--d:4"><h3>Consejo</h3><p>Fijar la link-local a mano facilita leer las tablas: <code>ipv6 address fe80::1 link-local</code></p></div>
+    </div>
+    <div class="rv" style="--d:2;flex:1">
+      <svg viewBox="0 0 780 660" width="100%" height="100%" role="img" aria-label="Intercambio de Hello EIGRP para IPv6 entre R1 y R2">
+        <line x1="180" y1="250" x2="600" y2="250" stroke="#55556A" stroke-width="7"/>
+        <use href="#rt" x="40" y="200" width="150" height="105"/>
+        <use href="#rt" x="590" y="200" width="150" height="105"/>
+        <text x="115" y="340" font-size="24" font-weight="800" text-anchor="middle">R1</text>
+        <text x="115" y="368" font-size="19" font-weight="700" fill="#7A0026" text-anchor="middle" class="mono">FE80::1</text>
+        <text x="665" y="340" font-size="24" font-weight="800" text-anchor="middle">R2</text>
+        <text x="665" y="368" font-size="19" font-weight="700" fill="#7A0026" text-anchor="middle" class="mono">FE80::2</text>
+        <text x="215" y="238" font-size="15" fill="#55556A">S0/0/0</text>
+        <text x="565" y="238" font-size="15" fill="#55556A" text-anchor="end">S0/0/0</text>
+        <!-- paquete R1 -> FF02::A -->
+        <rect x="235" y="40" width="310" height="128" rx="14" fill="#fff" stroke="#7A0026" stroke-width="3"/>
+        <rect x="235" y="40" width="310" height="36" rx="14" fill="#7A0026"/><rect x="235" y="60" width="310" height="16" fill="#7A0026"/>
+        <text x="390" y="65" font-size="17" font-weight="800" fill="#fff" text-anchor="middle">Hello EIGRP de R1</text>
+        <text x="255" y="108" font-size="18" fill="#33333F">Origen:  <tspan class="mono" font-weight="700" fill="#7A0026">FE80::1</tspan></text>
+        <text x="255" y="146" font-size="18" fill="#33333F">Destino: <tspan class="mono" font-weight="700" fill="#7A0026">FF02::A</tspan></text>
+        <path d="M200 205 C 215 150, 225 120, 232 110" stroke="#7A0026" stroke-width="3" fill="none" marker-end="url(#ar)"/>
+        <!-- paquete R2 -> FF02::A -->
+        <rect x="235" y="300" width="310" height="128" rx="14" fill="#fff" stroke="#A3123F" stroke-width="3"/>
+        <rect x="235" y="300" width="310" height="36" rx="14" fill="#A3123F"/><rect x="235" y="320" width="310" height="16" fill="#A3123F"/>
+        <text x="390" y="325" font-size="17" font-weight="800" fill="#fff" text-anchor="middle">Hello EIGRP de R2</text>
+        <text x="255" y="368" font-size="18" fill="#33333F">Origen:  <tspan class="mono" font-weight="700" fill="#A3123F">FE80::2</tspan></text>
+        <text x="255" y="406" font-size="18" fill="#33333F">Destino: <tspan class="mono" font-weight="700" fill="#A3123F">FF02::A</tspan></text>
+        <path d="M580 300 C 565 330, 560 345, 548 360" stroke="#A3123F" stroke-width="3" fill="none" marker-end="url(#ar)"/>
+        <text x="390" y="460" font-size="15" fill="#55556A" text-anchor="middle">Global del enlace: 2001:DB8:ACAD:12::1/64 y ::2/64 → se anuncian, pero no forman la adyacencia</text>
+        <!-- leyenda -->
+        <rect x="0" y="486" width="780" height="170" rx="16" fill="#F1F1F4"/>
+        <text x="24" y="522" font-size="18" font-weight="800" fill="#1E1E26">Tipos de dirección que intervienen</text>
+        <rect x="24" y="540" width="140" height="32" rx="8" fill="#7A0026"/><text x="94" y="562" font-size="16" font-weight="700" fill="#fff" text-anchor="middle" class="mono">FE80::/10</text>
+        <text x="180" y="562" font-size="16" fill="#33333F">Link-local: origen de los mensajes y siguiente salto; no sale del enlace.</text>
+        <rect x="24" y="580" width="140" height="32" rx="8" fill="#A3123F"/><text x="94" y="602" font-size="16" font-weight="700" fill="#fff" text-anchor="middle" class="mono">FF02::A</text>
+        <text x="180" y="602" font-size="16" fill="#33333F">Multicast: todos los routers EIGRP del enlace (Hello, actualizaciones).</text>
+        <rect x="24" y="620" width="140" height="32" rx="8" fill="#55556A"/><text x="94" y="642" font-size="16" font-weight="700" fill="#fff" text-anchor="middle" class="mono">2001:DB8::/32</text>
+        <text x="180" y="642" font-size="16" fill="#33333F">Global unicast de documentación: las redes que EIGRP anuncia.</text>
+      </svg>
+    </div>
+  </div>
+  <footer class="sf"><span>Redes III · EIGRP para IPv6 · <b>Juan Manuel Torres Jimenez</b></span><span>4 / 14</span></footer>
+</section>
+
+<!-- ================= 5. DIFERENCIAS ================= -->
+<section class="slide" data-x="7800" data-y="0" data-s="1" data-r="3" data-title="IPv4 vs IPv6">
+  <header class="sh"><div class="num">05</div><div><span class="kick">Comparativa</span><h2>Diferencias clave: EIGRP IPv4 vs IPv6</h2></div></header>
+  <div class="sb row" style="gap:30px">
+    <div class="rv" style="--d:1;width:960px">
+      <table class="t">
+        <tr><th style="width:215px">Aspecto</th><th style="width:335px">EIGRP para IPv4</th><th>EIGRP para IPv6</th></tr>
+        <tr><td>Crear el proceso</td><td><code>router eigrp 1</code></td><td><code>ipv6 router eigrp 1</code></td></tr>
+        <tr><td>Anunciar redes</td><td><code>network 172.16.1.0 0.0.0.255</code></td><td><code>ipv6 eigrp 1</code> en cada interfaz (no se usa <code>network</code>)</td></tr>
+        <tr><td>Routing previo</td><td>IPv4 se enruta por defecto</td><td>Obligatorio <code>ipv6 unicast-routing</code></td></tr>
+        <tr><td>Router-ID</td><td>32 bits; si no se asigna, se toma de una IPv4</td><td>32 bits (formato IPv4); manual si el router no tiene IPv4</td></tr>
+        <tr><td>Estado inicial</td><td>Activo al configurarlo</td><td>Puede iniciar apagado → <code>no shutdown</code></td></tr>
+        <tr><td>Multicast</td><td class="m">224.0.0.10</td><td class="m">FF02::A</td></tr>
+        <tr><td>Vecino / siguiente salto</td><td>IPv4 de la interfaz</td><td>Link-local FE80::/10</td></tr>
+        <tr><td>Verificación</td><td><code>show ip eigrp …</code></td><td><code>show ipv6 eigrp …</code></td></tr>
+      </table>
+      <p class="note" style="margin-top:12px">Se conservan: DUAL, la métrica (ancho de banda + retardo), la AD 90 / 170, el número de AS y el protocolo 88.</p>
+    </div>
+    <div class="rv" style="--d:3;flex:1">
+      <svg viewBox="0 0 470 650" width="100%" height="100%" role="img" aria-label="Comparación del encabezado de un Hello EIGRP en IPv4 e IPv6">
+        <text x="235" y="26" font-size="20" font-weight="800" text-anchor="middle" fill="#1E1E26">Un mismo Hello, dos encabezados</text>
+        <!-- IPv4 -->
+        <text x="0" y="74" font-size="18" font-weight="800" fill="#55556A">EIGRP para IPv4</text>
+        <rect x="0" y="88" width="470" height="46" rx="10" fill="#55556A"/>
+        <text x="16" y="118" font-size="16" font-weight="700" fill="#fff">Encabezado IPv4</text>
+        <rect x="0" y="140" width="230" height="56" rx="10" fill="#E6E6EC"/><text x="14" y="163" font-size="14" fill="#55556A">Origen</text><text x="14" y="186" font-size="17" font-weight="700" class="mono">172.16.3.1</text>
+        <rect x="240" y="140" width="230" height="56" rx="10" fill="#E6E6EC"/><text x="254" y="163" font-size="14" fill="#55556A">Destino</text><text x="254" y="186" font-size="17" font-weight="700" class="mono">224.0.0.10</text>
+        <rect x="0" y="202" width="470" height="40" rx="10" fill="#E6E6EC"/><text x="14" y="228" font-size="16">Protocolo: <tspan font-weight="700">88 (EIGRP)</tspan></text>
+        <rect x="0" y="248" width="470" height="44" rx="10" fill="#fff" stroke="#55556A" stroke-width="2" stroke-dasharray="6 4"/><text x="235" y="276" font-size="16" text-anchor="middle">Mensaje EIGRP Hello · AS 1</text>
+        <!-- igual -->
+        <text x="235" y="338" font-size="34" font-weight="800" text-anchor="middle" fill="#A3123F">≈</text>
+        <!-- IPv6 -->
+        <text x="0" y="384" font-size="18" font-weight="800" fill="#7A0026">EIGRP para IPv6</text>
+        <rect x="0" y="398" width="470" height="46" rx="10" fill="#7A0026"/>
+        <text x="16" y="428" font-size="16" font-weight="700" fill="#fff">Encabezado IPv6</text>
+        <rect x="0" y="450" width="230" height="56" rx="10" fill="#F7E8EE"/><text x="14" y="473" font-size="14" fill="#55556A">Origen (link-local)</text><text x="14" y="496" font-size="17" font-weight="700" fill="#7A0026" class="mono">FE80::1</text>
+        <rect x="240" y="450" width="230" height="56" rx="10" fill="#F7E8EE"/><text x="254" y="473" font-size="14" fill="#55556A">Destino (multicast)</text><text x="254" y="496" font-size="17" font-weight="700" fill="#7A0026" class="mono">FF02::A</text>
+        <rect x="0" y="512" width="470" height="40" rx="10" fill="#F7E8EE"/><text x="14" y="538" font-size="16">Next Header: <tspan font-weight="700">88 (EIGRP)</tspan></text>
+        <rect x="0" y="558" width="470" height="44" rx="10" fill="#fff" stroke="#7A0026" stroke-width="2" stroke-dasharray="6 4"/><text x="235" y="586" font-size="16" text-anchor="middle">Mensaje EIGRP Hello · AS 1</text>
+        <text x="235" y="636" font-size="14" fill="#55556A" text-anchor="middle">Direcciones de ejemplo; el router-id (p. ej. 1.1.1.1) es de 32 bits en ambos.</text>
+      </svg>
+    </div>
+  </div>
+  <footer class="sf"><span>Redes III · EIGRP para IPv6 · <b>Juan Manuel Torres Jimenez</b></span><span>5 / 14</span></footer>
+</section>
+
+<!-- ================= 6. REQUISITO PREVIO ================= -->
+<section class="slide" data-x="9000" data-y="2050" data-s="0.5" data-r="0" data-title="Requisito: ipv6 unicast-routing">
+  <header class="sh"><div class="num">06</div><div><span class="kick">Configuración · paso 1</span><h2>Requisito previo: <span class="m" style="color:var(--g)">ipv6 unicast-routing</span></h2></div></header>
+  <div class="sb col" style="gap:26px">
+    <div class="row" style="gap:30px">
+      <div class="code rv" style="--d:1;width:640px">
+        <div class="bar"><i></i><i></i><i></i><span>R1 · CLI (igual en R2 y R3)</span></div>
+<pre><span class="p">R1&gt;</span> <span class="k">enable</span>
+<span class="p">R1#</span> <span class="k">configure terminal</span>
+<span class="p">R1(config)#</span> <span class="k h">ipv6 unicast-routing</span>
+<span class="p">R1(config)#</span> <span class="k">end</span>
+<span class="p">R1#</span> <span class="k">show running-config | include unicast</span>
+<span class="o">ipv6 unicast-routing</span></pre>
+      </div>
+      <div class="col" style="flex:1;gap:14px">
+        <div class="card rv" style="--d:2;padding:16px 22px"><h3>¿Por qué?</h3><p>Por defecto un router Cisco no reenvía tráfico IPv6: puede tener direcciones IPv6, pero no actúa como router IPv6.</p></div>
+        <div class="card rv" style="--d:3;padding:16px 22px"><h3>Sin este comando</h3><p>IOS rechaza <code>ipv6 router eigrp 1</code> (el routing IPv6 no está habilitado) y no se intercambian rutas.</p></div>
+        <div class="card rv" style="--d:4;padding:16px 22px"><h3>¿Dónde?</h3><p>Una sola vez, en configuración global, en <b>cada</b> router: R1, R2 y R3.</p></div>
+      </div>
+    </div>
+    <div class="rv" style="--d:5">
+      <svg viewBox="0 0 1460 230" width="100%" role="img" aria-label="Flujo de configuración de EIGRP para IPv6">
+        <g font-size="15">
+          <polygon points="0,20 262,20 290,105 262,190 0,190" fill="#7A0026"/>
+          <polygon points="294,20 556,20 584,105 556,190 294,190 322,105" fill="#F1F1F4" stroke="#DCDCE3"/>
+          <polygon points="588,20 850,20 878,105 850,190 588,190 616,105" fill="#F1F1F4" stroke="#DCDCE3"/>
+          <polygon points="882,20 1144,20 1172,105 1144,190 882,190 910,105" fill="#F1F1F4" stroke="#DCDCE3"/>
+          <polygon points="1176,20 1460,20 1460,190 1176,190 1204,105" fill="#F1F1F4" stroke="#DCDCE3"/>
+        </g>
+        <g text-anchor="middle">
+          <text x="140" y="58" font-size="15" font-weight="800" fill="#FFD3E1" letter-spacing="2">PASO 1</text>
+          <text x="140" y="98" font-size="19" font-weight="700" fill="#fff" class="mono">ipv6 unicast-routing</text>
+          <text x="140" y="132" font-size="16" fill="#fff">Habilitar el routing IPv6</text>
+          <text x="440" y="58" font-size="15" font-weight="800" fill="#A3123F" letter-spacing="2">PASO 2</text>
+          <text x="440" y="98" font-size="19" font-weight="700" fill="#1E1E26" class="mono">ipv6 address …</text>
+          <text x="440" y="132" font-size="16" fill="#33333F">Global y link-local</text>
+          <text x="734" y="58" font-size="15" font-weight="800" fill="#A3123F" letter-spacing="2">PASO 3</text>
+          <text x="734" y="98" font-size="19" font-weight="700" fill="#1E1E26" class="mono">ipv6 router eigrp 1</text>
+          <text x="734" y="132" font-size="16" fill="#33333F">router-id · no shutdown</text>
+          <text x="1028" y="58" font-size="15" font-weight="800" fill="#A3123F" letter-spacing="2">PASO 4</text>
+          <text x="1028" y="98" font-size="19" font-weight="700" fill="#1E1E26" class="mono">ipv6 eigrp 1</text>
+          <text x="1028" y="132" font-size="16" fill="#33333F">En cada interfaz</text>
+          <text x="1325" y="58" font-size="15" font-weight="800" fill="#A3123F" letter-spacing="2">PASO 5</text>
+          <text x="1325" y="98" font-size="19" font-weight="700" fill="#1E1E26" class="mono">show ipv6 eigrp …</text>
+          <text x="1325" y="132" font-size="16" fill="#33333F">Verificar vecinos y rutas</text>
+          <text x="140" y="222" font-size="16" font-weight="800" fill="#7A0026">▲ Estás aquí</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <footer class="sf"><span>Redes III · EIGRP para IPv6 · <b>Juan Manuel Torres Jimenez</b></span><span>6 / 14</span></footer>
+</section>
+
+<!-- ================= 7. PROCESO ================= -->
+<section class="slide" data-x="9900" data-y="2350" data-s="0.5" data-r="0" data-title="Configurar el proceso">
+  <header class="sh"><div class="num">07</div><div><span class="kick">Configuración · paso 3</span><h2>Configurar el proceso EIGRP para IPv6</h2></div></header>
+  <div class="sb row" style="gap:34px">
+    <div class="col" style="width:700px;gap:16px">
+      <div class="code rv" style="--d:1">
+        <div class="bar"><i></i><i></i><i></i><span>R1 · CLI</span></div>
+<pre style="font-size:22px"><span class="p">R1(config)#</span> <span class="k">ipv6 router eigrp 1</span>      <span class="c">① </span>
+<span class="p">R1(config-rtr)#</span> <span class="k">no shutdown</span>      <span class="c">② </span>
+<span class="p">R1(config-rtr)#</span> <span class="k">router-id 1.1.1.1</span> <span class="c">③ </span></pre>
+      </div>
+      <div class="card rv" style="--d:2;padding:14px 20px"><p><b style="color:var(--g)">①</b> Crea el proceso. El <b>1</b> es el número de sistema autónomo (AS): debe ser igual en todos los routers. El prompt cambia a <span class="m">(config-rtr)</span>.</p></div>
+      <div class="card rv" style="--d:3;padding:14px 20px"><p><b style="color:var(--g)">②</b> En las versiones de IOS del curso el proceso de EIGRP para IPv6 se crea <b>apagado</b>; sin <code>no shutdown</code> no envía Hello ni forma vecinos.</p></div>
+      <div class="card rv" style="--d:4;padding:14px 20px"><p><b style="color:var(--g)">③</b> ID de 32 bits escrita como IPv4. Identifica al router (no es una dirección enrutable) y debe ser <b>única</b>. Es obligatoria si el router no tiene IPv4.</p></div>
+      <p class="note rv" style="--d:5">Comando tomado del PDF de clase. En algunas versiones de IOS se escribe <code>eigrp router-id 1.1.1.1</code>.</p>
+    </div>
+    <div class="rv" style="--d:3;flex:1">
+      <svg viewBox="0 0 690 660" width="100%" height="100%" role="img" aria-label="Cómo se elige el router-id">
+        <text x="0" y="26" font-size="22" font-weight="800" fill="#1E1E26">¿Cómo se elige el router-id?</text>
+        <g font-size="17">
+          <rect x="0" y="50" width="380" height="78" rx="14" fill="#F1F1F4" stroke="#7A0026" stroke-width="2.5"/>
+          <text x="190" y="96" text-anchor="middle" font-weight="700">¿Se configuró router-id?</text>
+          <rect x="0" y="190" width="380" height="78" rx="14" fill="#F1F1F4" stroke="#7A0026" stroke-width="2.5"/>
+          <text x="190" y="236" text-anchor="middle" font-weight="700">¿Hay una loopback IPv4 activa?</text>
+          <rect x="0" y="330" width="380" height="78" rx="14" fill="#F1F1F4" stroke="#7A0026" stroke-width="2.5"/>
+          <text x="190" y="366" text-anchor="middle" font-weight="700">¿Hay otra interfaz con</text>
+          <text x="190" y="390" text-anchor="middle" font-weight="700">IPv4 activa?</text>
+          <!-- resultados sí -->
+          <rect x="460" y="50" width="230" height="78" rx="14" fill="#fff" stroke="#2E7D4F" stroke-width="2.5"/>
+          <text x="575" y="85" text-anchor="middle" font-size="16">Se usa el valor</text><text x="575" y="108" text-anchor="middle" font-size="16">configurado</text>
+          <rect x="460" y="190" width="230" height="78" rx="14" fill="#fff" stroke="#2E7D4F" stroke-width="2.5"/>
+          <text x="575" y="225" text-anchor="middle" font-size="16">IPv4 más alta</text><text x="575" y="248" text-anchor="middle" font-size="16">de una loopback</text>
+          <rect x="460" y="330" width="230" height="78" rx="14" fill="#fff" stroke="#2E7D4F" stroke-width="2.5"/>
+          <text x="575" y="365" text-anchor="middle" font-size="16">IPv4 activa más alta</text><text x="575" y="388" text-anchor="middle" font-size="16">de otra interfaz</text>
+          <!-- flechas -->
+          <g stroke="#2E7D4F" stroke-width="3" fill="none"><path d="M380 89 H452" marker-end="url(#arg)"/><path d="M380 229 H452" marker-end="url(#arg)"/><path d="M380 369 H452" marker-end="url(#arg)"/></g>
+          <g font-size="15" font-weight="800" fill="#2E7D4F"><text x="400" y="80">Sí</text><text x="400" y="220">Sí</text><text x="400" y="360">Sí</text></g>
+          <g stroke="#7A0026" stroke-width="3" fill="none"><path d="M190 128 V182" marker-end="url(#ar)"/><path d="M190 268 V322" marker-end="url(#ar)"/><path d="M190 408 V462" marker-end="url(#ar)"/></g>
+          <g font-size="15" font-weight="800" fill="#7A0026"><text x="202" y="162">No</text><text x="202" y="302">No</text><text x="202" y="442">No</text></g>
+          <!-- final -->
+          <rect x="0" y="470" width="690" height="116" rx="16" fill="#7A0026"/>
+          <text x="345" y="512" text-anchor="middle" font-size="20" font-weight="800" fill="#fff">Sin router-id, el proceso EIGRP para IPv6 no arranca</text>
+          <text x="345" y="546" text-anchor="middle" font-size="17" fill="#FFE3EC">Caso típico: router solo-IPv6 (sin direcciones IPv4)</text>
+          <text x="345" y="572" text-anchor="middle" font-size="17" fill="#FFE3EC">→ asignarlo siempre a mano: <tspan class="mono" font-weight="700" fill="#fff">router-id 1.1.1.1</tspan></text>
+          <text x="0" y="625" font-size="15" fill="#55556A">Buena práctica: R1 = 1.1.1.1, R2 = 2.2.2.2, R3 = 3.3.3.3 (fáciles de reconocer).</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <footer class="sf"><span>Redes III · EIGRP para IPv6 · <b>Juan Manuel Torres Jimenez</b></span><span>7 / 14</span></footer>
+</section>
+
+<!-- ================= 8. POR INTERFAZ ================= -->
+<section class="slide" data-x="10800" data-y="2050" data-s="0.5" data-r="0" data-title="Habilitar EIGRP por interfaz">
+  <header class="sh"><div class="num">08</div><div><span class="kick">Configuración · paso 4</span><h2>Habilitar EIGRP en cada interfaz</h2></div></header>
+  <div class="sb col" style="gap:14px">
+    <div class="rv" style="--d:1;height:392px">
+      <svg viewBox="0 40 1460 392" width="100%" height="100%" role="img" aria-label="Topología de tres routers con direccionamiento IPv6">
+        <rect x="500" y="364" width="460" height="64" rx="12" fill="#F7E8EE"/>
+        <text x="730" y="391" font-size="18" font-weight="800" fill="#7A0026" text-anchor="middle">AS 1 en los tres routers</text>
+        <text x="730" y="416" font-size="16" fill="#33333F" text-anchor="middle">ipv6 eigrp 1 en G0/0, S0/0/0 y S0/0/1</text>
+        <!-- enlaces -->
+        <g stroke-width="6" stroke="#7A0026"><line x1="730" y1="100" x2="330" y2="320"/><line x1="730" y1="100" x2="1130" y2="320"/><line x1="330" y1="320" x2="1130" y2="320"/></g>
+        <g stroke-width="5" stroke="#8A8A98"><line x1="795" y1="100" x2="915" y2="100"/><line x1="265" y1="320" x2="155" y2="320"/><line x1="1195" y1="320" x2="1305" y2="320"/></g>
+        <!-- subredes de enlaces -->
+        <g font-size="19" font-weight="700" fill="#7A0026" class="mono" text-anchor="middle">
+          <text transform="translate(516,193) rotate(-28.8)">2001:DB8:ACAD:12::/64</text>
+          <text transform="translate(944,193) rotate(28.8)">2001:DB8:ACAD:13::/64</text>
+          <text x="730" y="306">2001:DB8:ACAD:23::/64</text>
+        </g>
+        <!-- interfaces -->
+        <g font-size="16.5" fill="#33333F" class="mono">
+          <text x="640" y="118" text-anchor="end">S0/0/0 ::1</text>
+          <text x="820" y="118">S0/0/1 ::1</text>
+          <text x="415" y="300">S0/0/0 ::2</text>
+          <text x="1045" y="300" text-anchor="end">S0/0/1 ::3</text>
+          <text x="410" y="346">S0/0/1 ::2</text>
+          <text x="1050" y="346" text-anchor="end">S0/0/0 ::3</text>
+          <text x="855" y="88" text-anchor="middle">G0/0 ::1</text>
+          <text x="210" y="308" text-anchor="middle">G0/0 ::1</text>
+          <text x="1250" y="308" text-anchor="middle">G0/0 ::1</text>
+        </g>
+        <!-- routers -->
+        <use href="#rt" x="665" y="55" width="130" height="91"/>
+        <use href="#rt" x="265" y="275" width="130" height="91"/>
+        <use href="#rt" x="1065" y="275" width="130" height="91"/>
+        <g text-anchor="middle">
+          <text x="730" y="172" font-size="22" font-weight="800">R1</text><text x="730" y="196" font-size="17" fill="#55556A">RID 1.1.1.1 · <tspan class="mono" fill="#7A0026" font-weight="700">FE80::1</tspan></text>
+          <text x="330" y="396" font-size="22" font-weight="800">R2</text><text x="330" y="420" font-size="17" fill="#55556A">RID 2.2.2.2 · <tspan class="mono" fill="#7A0026" font-weight="700">FE80::2</tspan></text>
+          <text x="1130" y="396" font-size="22" font-weight="800">R3</text><text x="1130" y="420" font-size="17" fill="#55556A">RID 3.3.3.3 · <tspan class="mono" fill="#7A0026" font-weight="700">FE80::3</tspan></text>
+        </g>
+        <!-- LANs -->
+        <use href="#sw" x="915" y="75" width="90" height="50"/>
+        <use href="#sw" x="65" y="295" width="90" height="50"/>
+        <use href="#sw" x="1305" y="295" width="90" height="50"/>
+        <g font-size="16.5">
+          <text x="1098" y="94" font-weight="800" fill="#55556A">LAN 1 · pasiva</text><text x="1098" y="117" class="mono" fill="#33333F">2001:DB8:ACAD:1::/64</text>
+          <g text-anchor="middle"><text x="110" y="370" font-weight="800" fill="#55556A">LAN 2 · pasiva</text><text x="110" y="392" class="mono" fill="#33333F">2001:DB8:ACAD:2::/64</text>
+          <text x="1350" y="370" font-weight="800" fill="#55556A">LAN 3 · pasiva</text><text x="1350" y="392" class="mono" fill="#33333F">2001:DB8:ACAD:3::/64</text></g>
+        </g>
+        <use href="#pc" x="1030" y="74" width="54" height="49"/><line x1="1005" y1="100" x2="1030" y2="100" stroke="#8A8A98" stroke-width="3"/>
+      </svg>
+    </div>
+    <div class="row" style="gap:20px;flex:1">
+      <div class="code rv" style="--d:2;width:560px;padding:10px 18px 12px">
+        <div class="bar" style="margin-bottom:4px"><i></i><i></i><i></i><span>R1 · topología de ejemplo (subredes /64 de 2001:DB8:ACAD::/48)</span></div>
+<pre style="font-size:16.5px;line-height:1.42"><span class="p">R1(config)#</span> <span class="k">interface g0/0</span>
+<span class="p">R1(config-if)#</span> <span class="k h">ipv6 eigrp 1</span>
+<span class="p">R1(config-if)#</span> <span class="k">interface s0/0/0</span>
+<span class="p">R1(config-if)#</span> <span class="k h">ipv6 eigrp 1</span>
+<span class="p">R1(config-if)#</span> <span class="k">interface s0/0/1</span>
+<span class="p">R1(config-if)#</span> <span class="k h">ipv6 eigrp 1</span>
+<span class="p">R1(config-if)#</span> <span class="k">ipv6 router eigrp 1</span>
+<span class="p">R1(config-rtr)#</span> <span class="k">passive-interface g0/0</span></pre>
+      </div>
+      <div class="card rv" style="--d:3;flex:1;padding:16px 18px"><h3>Sustituye a <span class="m">network</span></h3><p>En IPv6 no hay <code>network</code>: cada interfaz se une al proceso con <code>ipv6 eigrp 1</code>, y su red se anuncia.</p></div>
+      <div class="card rv" style="--d:4;flex:1;padding:16px 18px"><h3>Mismo AS en todos</h3><p>El número (1) debe coincidir en R1, R2 y R3. Con un AS distinto no se forman vecinos.</p></div>
+      <div class="card rv" style="--d:5;flex:1;padding:16px 18px"><h3>LAN pasiva</h3><p><code>passive-interface</code> deja de enviar Hello hacia la LAN, pero su red <b>se sigue anunciando</b>.</p></div>
+    </div>
+  </div>
+  <footer class="sf"><span>Redes III · EIGRP para IPv6 · <b>Juan Manuel Torres Jimenez</b></span><span>8 / 14</span></footer>
+</section>
+
+<!-- ================= 9. VERIFICACIÓN ================= -->
+<section class="slide" data-x="9600" data-y="4100" data-s="1" data-r="-2" data-title="Verificación">
+  <header class="sh"><div class="num">09</div><div><span class="kick">Verificación</span><h2>Comandos de verificación</h2></div></header>
+  <div class="sb col s9" style="gap:34px">
+    <table class="t rv" style="--d:1;font-size:20px">
+      <tr><th style="width:360px">Comando</th><th style="width:380px">Qué confirma</th><th>Qué buscar en la salida</th></tr>
+      <tr><td><code>show ipv6 eigrp neighbors</code></td><td>Que se formaron las adyacencias</td><td>Una entrada por vecino con su link-local (FE80::2…) y la interfaz local; Q Cnt en 0</td></tr>
+      <tr><td><code>show ipv6 route eigrp</code></td><td>Las rutas aprendidas por EIGRP</td><td>Código <b>D</b>, distancia <span class="m">[90/métrica]</span> y siguiente salto link-local</td></tr>
+      <tr><td><code>show ipv6 eigrp topology</code></td><td>La tabla de topología de DUAL</td><td>Sucesores y sucesores factibles con su FD y distancia reportada</td></tr>
+      <tr><td><code>show ipv6 protocols</code></td><td>Los parámetros del proceso</td><td>Número de AS, router-id, valores K e interfaces (incluidas las pasivas)</td></tr>
+      <tr><td><code>show ipv6 eigrp interfaces</code></td><td>Las interfaces que participan</td><td>Que aparezcan las interfaces esperadas y su número de vecinos (Peers)</td></tr>
+      <tr><td><code>show ipv6 eigrp traffic</code></td><td>El intercambio de paquetes EIGRP</td><td>Contadores de Hello, Update, Query, Reply y Ack que van aumentando</td></tr>
+    </table>
+    <div class="rv" style="--d:3">
+      <svg viewBox="0 0 1460 140" width="100%" role="img" aria-label="Orden sugerido de verificación">
+        <text x="0" y="20" font-size="17" font-weight="800" fill="#7A0026" letter-spacing="1.5">ORDEN SUGERIDO PARA DIAGNOSTICAR</text>
+        <g font-size="17">
+          <rect x="0" y="38" width="320" height="90" rx="14" fill="#F1F1F4" stroke="#DCDCE3" stroke-width="2"/>
+          <rect x="380" y="38" width="320" height="90" rx="14" fill="#F1F1F4" stroke="#DCDCE3" stroke-width="2"/>
+          <rect x="760" y="38" width="320" height="90" rx="14" fill="#F1F1F4" stroke="#DCDCE3" stroke-width="2"/>
+          <rect x="1140" y="38" width="320" height="90" rx="14" fill="#7A0026"/>
+          <g text-anchor="middle">
+            <text x="160" y="72" font-weight="800" fill="#7A0026">1 · ¿Interfaces correctas?</text><text x="160" y="104" class="mono" font-size="16">show ipv6 eigrp interfaces</text>
+            <text x="540" y="72" font-weight="800" fill="#7A0026">2 · ¿Hay vecinos?</text><text x="540" y="104" class="mono" font-size="16">show ipv6 eigrp neighbors</text>
+            <text x="920" y="72" font-weight="800" fill="#7A0026">3 · ¿DUAL tiene sucesores?</text><text x="920" y="104" class="mono" font-size="16">show ipv6 eigrp topology</text>
+            <text x="1300" y="72" font-weight="800" fill="#fff">4 · ¿Rutas D instaladas?</text><text x="1300" y="104" class="mono" font-size="16" fill="#fff">show ipv6 route eigrp</text>
+          </g>
+          <g stroke="#7A0026" stroke-width="3.5"><path d="M326 83 H372" marker-end="url(#ar)"/><path d="M706 83 H752" marker-end="url(#ar)"/><path d="M1086 83 H1132" marker-end="url(#ar)"/></g>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <footer class="sf"><span>Redes III · EIGRP para IPv6 · <b>Juan Manuel Torres Jimenez</b></span><span>9 / 14</span></footer>
+</section>
+
+<!-- ================= 10. EJEMPLO COMPLETO ================= -->
+<section class="slide" data-x="7650" data-y="4750" data-s="1" data-r="2" data-title="Ejemplo completo R1">
+  <header class="sh"><div class="num">10</div><div><span class="kick">Ejemplo integrador</span><h2>Configuración completa de R1</h2></div></header>
+  <div class="sb row" style="gap:28px">
+    <div class="col" style="width:640px;gap:10px">
+      <div class="code rv" style="--d:1;padding:10px 18px 12px">
+        <div class="bar" style="margin-bottom:4px"><i></i><i></i><i></i><span>R1 · topología de la diapositiva 8</span></div>
+<pre style="font-size:15.5px;line-height:1.38"><span class="p">R1(config)#</span> <span class="k">ipv6 unicast-routing</span>
+<span class="p">R1(config)#</span> <span class="k">ipv6 router eigrp 1</span>
+<span class="p">R1(config-rtr)#</span> <span class="k">router-id 1.1.1.1</span>
+<span class="p">R1(config-rtr)#</span> <span class="k">no shutdown</span>
+<span class="p">R1(config-rtr)#</span> <span class="k">passive-interface g0/0</span>
+<span class="p">R1(config-rtr)#</span> <span class="k">interface g0/0</span>
+<span class="p">R1(config-if)#</span> <span class="k">ipv6 address 2001:DB8:ACAD:1::1/64</span>
+<span class="p">R1(config-if)#</span> <span class="k">ipv6 address fe80::1 link-local</span>
+<span class="p">R1(config-if)#</span> <span class="k h">ipv6 eigrp 1</span>
+<span class="p">R1(config-if)#</span> <span class="k">no shutdown</span>
+<span class="p">R1(config-if)#</span> <span class="k">interface s0/0/0</span>
+<span class="p">R1(config-if)#</span> <span class="k">ipv6 address 2001:DB8:ACAD:12::1/64</span>
+<span class="p">R1(config-if)#</span> <span class="k">ipv6 address fe80::1 link-local</span>
+<span class="p">R1(config-if)#</span> <span class="k h">ipv6 eigrp 1</span>
+<span class="p">R1(config-if)#</span> <span class="k">no shutdown</span>
+<span class="p">R1(config-if)#</span> <span class="k">interface s0/0/1</span>
+<span class="p">R1(config-if)#</span> <span class="k">ipv6 address 2001:DB8:ACAD:13::1/64</span>
+<span class="p">R1(config-if)#</span> <span class="k">ipv6 address fe80::1 link-local</span>
+<span class="p">R1(config-if)#</span> <span class="k h">ipv6 eigrp 1</span>
+<span class="p">R1(config-if)#</span> <span class="k">no shutdown</span></pre>
+      </div>
+      <p class="note rv" style="--d:2">R2 y R3 se configuran igual con su router-id (2.2.2.2 / 3.3.3.3), su link-local (FE80::2 / FE80::3) y sus subredes. En el extremo DCE de cada serial se agrega <code>clock rate</code> (requisito físico, no de EIGRP).</p>
+    </div>
+    <div class="col" style="flex:1;gap:12px">
+      <div class="warn rv" style="--d:2">⚠ EJEMPLO ILUSTRATIVO — no es una captura de Packet Tracer. Hold, Uptime, SRTT, RTO y Seq varían en cada equipo.</div>
+      <div class="code rv" style="--d:3;padding:10px 16px 12px">
+        <div class="bar" style="margin-bottom:4px"><i></i><i></i><i></i><span>Salida esperada (formato de IOS)</span></div>
+<pre style="font-size:13.6px;line-height:1.38"><span class="p">R1#</span> <span class="k">show ipv6 eigrp neighbors</span>
+<span class="o">EIGRP-IPv6 Neighbors for AS(1)
+H   Address                 Interface       Hold Uptime   SRTT   RTO  Q  Seq
+                                            (sec)         (ms)       Cnt Num
+1   Link-local address:     Se0/0/1           12 00:04:21   40   240  0  7
+    </span><span class="k">FE80::3</span><span class="o">
+0   Link-local address:     Se0/0/0           13 00:05:02   36   216  0  8
+    </span><span class="k">FE80::2</span></pre>
+      </div>
+      <div class="rv" style="--d:4;flex:1">
+        <svg viewBox="0 0 790 300" width="100%" height="100%" role="img" aria-label="Esquema de la tabla de vecinos EIGRP">
+          <text x="0" y="18" font-size="16" font-weight="800" fill="#7A0026" letter-spacing="1">ESQUEMA: CÓMO LEER LA TABLA DE VECINOS</text>
+          <!-- callouts arriba -->
+          <g font-size="14.5">
+            <rect x="40" y="32" width="200" height="50" rx="10" fill="#F7E8EE"/><text x="140" y="53" text-anchor="middle" font-weight="700" fill="#7A0026">Address</text><text x="140" y="73" text-anchor="middle">link-local del vecino</text>
+            <rect x="282" y="32" width="196" height="50" rx="10" fill="#F7E8EE"/><text x="380" y="53" text-anchor="middle" font-weight="700" fill="#7A0026">Hold (s)</text><text x="380" y="73" text-anchor="middle">tiempo antes de darlo por caído</text>
+            <rect x="590" y="32" width="200" height="50" rx="10" fill="#F7E8EE"/><text x="690" y="53" text-anchor="middle" font-weight="700" fill="#7A0026">Q Cnt</text><text x="690" y="73" text-anchor="middle">paquetes en cola: ideal 0</text>
+          </g>
+          <g stroke="#7A0026" stroke-width="2"><path d="M140 82 V104"/><path d="M380 82 V104"/><path d="M690 82 V104"/></g>
+          <!-- tabla -->
+          <g font-size="14.5" text-anchor="middle">
+            <rect x="0" y="104" width="790" height="34" rx="6" fill="#7A0026"/>
+            <g fill="#fff" font-weight="700"><text x="25" y="126">H</text><text x="135" y="126">Address</text><text x="280" y="126">Interface</text><text x="380" y="126">Hold</text><text x="475" y="126">Uptime</text><text x="565" y="126">SRTT</text><text x="635" y="126">RTO</text><text x="695" y="126">Q Cnt</text><text x="755" y="126">Seq</text></g>
+            <rect x="0" y="138" width="790" height="32" fill="#F1F1F4"/><rect x="0" y="170" width="790" height="32" fill="#FBFBFC"/>
+            <g class="mono" fill="#33333F"><text x="25" y="159">0</text><text x="135" y="159" fill="#7A0026" font-weight="700">FE80::2</text><text x="280" y="159">Se0/0/0</text><text x="380" y="159">s</text><text x="475" y="159">hh:mm:ss</text><text x="565" y="159">ms</text><text x="635" y="159">ms</text><text x="695" y="159">0</text><text x="755" y="159">n</text>
+            <text x="25" y="191">1</text><text x="135" y="191" fill="#7A0026" font-weight="700">FE80::3</text><text x="280" y="191">Se0/0/1</text><text x="380" y="191">s</text><text x="475" y="191">hh:mm:ss</text><text x="565" y="191">ms</text><text x="635" y="191">ms</text><text x="695" y="191">0</text><text x="755" y="191">n</text></g>
+          </g>
+          <g stroke="#55556A" stroke-width="2"><path d="M25 202 V226"/><path d="M280 202 V226"/><path d="M475 202 V226"/><path d="M600 202 V226"/></g>
+          <g font-size="14.5">
+            <rect x="0" y="226" width="180" height="50" rx="10" fill="#F1F1F4"/><text x="90" y="247" text-anchor="middle" font-weight="700">H</text><text x="90" y="267" text-anchor="middle">orden de detección</text>
+            <rect x="192" y="226" width="176" height="50" rx="10" fill="#F1F1F4"/><text x="280" y="247" text-anchor="middle" font-weight="700">Interface</text><text x="280" y="267" text-anchor="middle">interfaz local</text>
+            <rect x="380" y="226" width="190" height="50" rx="10" fill="#F1F1F4"/><text x="475" y="247" text-anchor="middle" font-weight="700">Uptime</text><text x="475" y="267" text-anchor="middle">tiempo como vecino</text>
+            <rect x="582" y="226" width="208" height="50" rx="10" fill="#F1F1F4"/><text x="686" y="247" text-anchor="middle" font-weight="700">SRTT / RTO</text><text x="686" y="267" text-anchor="middle">tiempos de RTP</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+  <footer class="sf"><span>Redes III · EIGRP para IPv6 · <b>Juan Manuel Torres Jimenez</b></span><span>10 / 14</span></footer>
+</section>
+
+<!-- ================= 11. TABLA RESUMEN ================= -->
+<section class="slide" data-x="5700" data-y="4100" data-s="1" data-r="-3" data-title="Tabla resumen de comandos">
+  <header class="sh"><div class="num">11</div><div><span class="kick">Material de clase</span><h2>Resumen de comandos (PDF del profesor)</h2></div></header>
+  <div class="sb col" style="gap:12px">
+    <div class="row" style="gap:26px">
+      <table class="t rv" style="--d:1;width:880px;font-size:16.5px">
+        <tr><th style="width:470px">Configuración</th><th>Propósito</th></tr>
+        <tr><td><code>ipv6 unicast-routing</code></td><td>Habilita el routing IPv6 en cada router.</td></tr>
+        <tr><td><code>ipv6 router eigrp 1</code></td><td>Configura el routing EIGRP para IPv6 (AS 1).</td></tr>
+        <tr><td><code>no shutdown</code> · <code>router-id 1.1.1.1</code></td><td>Activa el proceso y asigna a mano la ID del router.</td></tr>
+        <tr><td><code>int g0/0</code> → <code>ipv6 eigrp 1</code></td><td>Asigna EIGRP para IPv6 a la interfaz; se hace en cada interfaz.</td></tr>
+        <tr><td><code>ipv6 address fe80::1 link-local</code></td><td>Fija la dirección link-local de la interfaz.</td></tr>
+        <tr><td><code>ipv6 summary-address eigrp 1</code><br><code>2001:DB8:ACAD:8::/62</code></td><td>Anuncia una ruta IPv6 resumida por S0/0/0.</td></tr>
+        <tr><td><code>ipv6 route ::/0 Serial0/1/0</code><br><code>redistribute static</code></td><td>Crea la ruta predeterminada IPv6 y la propaga con EIGRP.</td></tr>
+        <tr><td><code>passive-interface gigabitethernet 0/0</code></td><td>Gi0/0 deja de enviar Hello a los vecinos.</td></tr>
+        <tr><td><code>bandwidth 64</code></td><td>Ancho de banda usado en los cálculos de DUAL.</td></tr>
+      </table>
+      <table class="t rv" style="--d:2;flex:1;font-size:16.5px">
+        <tr><th style="width:290px">Verificación</th><th>Muestra</th></tr>
+        <tr><td><code>show ipv6 eigrp neighbors</code></td><td>Vecinos y sus direcciones link-local.</td></tr>
+        <tr><td><code>show ipv6 route</code></td><td>Rutas IPv6; las de EIGRP con código D.</td></tr>
+        <tr><td><code>show ipv6 protocols</code></td><td>Parámetros y estado del proceso IPv6.</td></tr>
+        <tr><td><code>show ipv6 interface brief</code></td><td>Estado de interfaces y sus IPv6.</td></tr>
+        <tr><td><code>show running-config</code></td><td>Configuración activa del router.</td></tr>
+        <tr><td><code>show ip eigrp topology</code><br><code>all-links</code></td><td>(IPv4) sucesores, factibles y FD.</td></tr>
+      </table>
+    </div>
+    <p class="note rv" style="--d:3">Fuente: «Comandos de configuración y verificación» (material de clase). Se muestran las filas de EIGRP que aplican a IPv6. En el PDF, <code>passive-interface</code> y <code>bandwidth</code> aparecen en el ejemplo IPv4; en IPv6, <code>passive-interface</code> va dentro de <code>ipv6 router eigrp 1</code>.</p>
+  </div>
+  <footer class="sf"><span>Redes III · EIGRP para IPv6 · <b>Juan Manuel Torres Jimenez</b></span><span>11 / 14</span></footer>
+</section>
+
+<!-- ================= 12. BUENAS PRÁCTICAS ================= -->
+<section class="slide" data-x="3750" data-y="4750" data-s="1" data-r="2" data-title="Buenas prácticas y errores">
+  <header class="sh"><div class="num">12</div><div><span class="kick">Diagnóstico</span><h2>Errores comunes y buenas prácticas</h2></div></header>
+  <div class="sb row" style="gap:28px">
+    <table class="t rv" style="--d:1;width:930px;font-size:17px">
+      <tr><th style="width:280px">Error</th><th style="width:330px">Qué pasa</th><th>Solución</th></tr>
+      <tr><td>Olvidar <code>no shutdown</code> del proceso</td><td>No se envían Hello y no aparecen vecinos</td><td><code>no shutdown</code> en <span class="m">(config-rtr)</span></td></tr>
+      <tr><td>No habilitar el routing IPv6</td><td>No se puede crear el proceso ni enrutar IPv6</td><td><code>ipv6 unicast-routing</code></td></tr>
+      <tr><td>Número de AS distinto</td><td>Los routers nunca forman adyacencia</td><td>Usar el mismo AS (1) en todos</td></tr>
+      <tr><td>Usar <code>network</code> en IPv6</td><td>No existe en <span class="m">ipv6 router eigrp</span>; la red no se anuncia</td><td><code>ipv6 eigrp 1</code> en la interfaz</td></tr>
+      <tr><td>Interfaz sin <code>ipv6 eigrp 1</code></td><td>Su red no se anuncia y no hay vecino por ese enlace</td><td>Revisar con <code>show ipv6 eigrp interfaces</code></td></tr>
+      <tr><td>Router solo-IPv6 sin router-id</td><td>El proceso no arranca</td><td><code>router-id 1.1.1.1</code> (único)</td></tr>
+    </table>
+    <div class="card rv" style="--d:2;flex:1;background:var(--gt);padding:22px 26px">
+      <h3 style="font-size:25px;margin-bottom:12px">✔ Buenas prácticas</h3>
+      <ul style="font-size:18.5px;line-height:1.4;padding-left:22px;display:flex;flex-direction:column;gap:11px;color:#2A2A35">
+        <li>Asignar un <b>router-id</b> manual, único y fácil de reconocer.</li>
+        <li>Fijar link-local sencillas (<span class="m">FE80::1</span>, <span class="m">::2</span>, <span class="m">::3</span>) para leer las tablas.</li>
+        <li>Hacer <b>pasivas</b> las interfaces LAN donde no hay routers.</li>
+        <li>Documentar subredes, interfaces y AS antes de configurar.</li>
+        <li>Verificar en orden: interfaces → vecinos → topología → rutas.</li>
+        <li>Ajustar <code>bandwidth</code> real en los seriales para que la métrica sea correcta.</li>
+      </ul>
+    </div>
+  </div>
+  <footer class="sf"><span>Redes III · EIGRP para IPv6 · <b>Juan Manuel Torres Jimenez</b></span><span>12 / 14</span></footer>
+</section>
+
+<!-- ================= 13. CONCLUSIONES ================= -->
+<section class="slide" data-x="1800" data-y="4100" data-s="1" data-r="-2" data-title="Conclusiones">
+  <header class="sh"><div class="num">13</div><div><span class="kick">Cierre</span><h2>Conclusiones</h2></div></header>
+  <div class="sb col s13" style="gap:22px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px">
+      <div class="card rv" style="--d:1"><h3>1 · Lo esencial se conserva</h3><p>DUAL, la métrica (ancho de banda + retardo), la AD 90 / 170 y las actualizaciones parciales funcionan igual que en IPv4.</p></div>
+      <div class="card rv" style="--d:2"><h3>2 · Cambia la configuración</h3><p>El proceso es <code>ipv6 router eigrp 1</code> y las redes se activan por interfaz con <code>ipv6 eigrp 1</code>, no con <code>network</code>.</p></div>
+      <div class="card rv" style="--d:3"><h3>3 · Tres requisitos</h3><p><code>ipv6 unicast-routing</code>, un router-id de 32 bits y <code>no shutdown</code> en el proceso.</p></div>
+      <div class="card rv" style="--d:4"><h3>4 · Vecinos por link-local</h3><p>Los Hello van a FF02::A desde direcciones FE80::/10; fijarlas a mano simplifica la verificación.</p></div>
+    </div>
+    <div class="card rv" style="--d:5"><h3>5 · Verificar es parte de configurar</h3><p>Con <code>show ipv6 eigrp neighbors</code>, <code>show ipv6 eigrp topology</code> y <code>show ipv6 route eigrp</code> se confirma que la red convergió antes de darla por terminada.</p></div>
+    <div class="rv" style="--d:6;background:var(--g);color:#fff;border-radius:18px;padding:24px 32px;font-size:27px;font-weight:700;line-height:1.35">Misma lógica de EIGRP, nueva sintaxis IPv6: dominar ambas versiones prepara para redes de doble pila (dual stack).</div>
+  </div>
+  <footer class="sf"><span>Redes III · EIGRP para IPv6 · <b>Juan Manuel Torres Jimenez</b></span><span>13 / 14</span></footer>
+</section>
+
+<!-- ================= 14. REFERENCIAS ================= -->
+<section class="slide" data-x="-150" data-y="4750" data-s="1" data-r="0" data-title="Referencias">
+  <header class="sh"><div class="num">14</div><div><span class="kick">Fuentes</span><h2>Referencias</h2></div></header>
+  <div class="sb col" style="gap:26px">
+    <ol class="rv" style="--d:1;font-size:23px;line-height:1.42;padding-left:34px;display:flex;flex-direction:column;gap:18px;color:#2A2A35">
+      <li>Cisco Networking Academy. <i>CCNA</i> — Capítulo 7: EIGRP (configuración de EIGRP para IPv4 e IPv6). Cisco Systems.</li>
+      <li>Video «Enrutamiento EIGRP para IPV6». YouTube. Material proporcionado por el profesor.<br><span class="m" style="font-size:17px;color:var(--g)">https://www.youtube.com/watch?v=jMQFWStPUts</span></li>
+      <li>«Comandos de configuración y verificación» (PDF). Material de clase de Redes III — tabla de comandos de EIGRP y OSPF.</li>
+      <li>CCNA desde Cero. «Configuración EIGRP con IPv4 (ejemplo)» — usado como repaso de EIGRP en IPv4.<br><span class="m" style="font-size:17px;color:var(--g)">https://ccnadesdecero.es/configuracion-eigrp-con-ipv4-ejemplo/</span></li>
+    </ol>
+    <div class="row" style="gap:22px;flex:1">
+      <div class="card rv" style="--d:2;flex:1.5;border-left:8px solid var(--g);padding:22px 28px;display:flex;flex-direction:column;justify-content:center"><h3 style="font-size:25px">Nota de transparencia</h3><p style="font-size:19px">Todos los diagramas son SVG elaborados para esta presentación. La salida de <code>show ipv6 eigrp neighbors</code> (diap. 10) es un <b>ejemplo ilustrativo</b> con el formato de IOS, no una captura de Packet Tracer. El estado inicial del proceso (y por tanto la necesidad de <code>no shutdown</code>) depende de la versión de IOS. Los datos técnicos se contrastaron con el temario CCNA y el PDF de comandos de clase.</p></div>
+      <div class="rv" style="--d:3;flex:1;background:var(--g);color:#fff;border-radius:18px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:20px">
+        <div style="font-size:56px;font-weight:800">¡Gracias!</div>
+        <div style="font-size:21px;opacity:.92;margin-top:10px">Juan Manuel Torres Jimenez</div>
+        <div style="font-size:19px;opacity:.85;margin-top:4px">Registro 26110072 · Grupo 2Pe · Redes III</div>
+      </div>
+    </div>
+  </div>
+  <footer class="sf"><span>Redes III · EIGRP para IPv6 · <b>Juan Manuel Torres Jimenez</b></span><span>14 / 14</span></footer>
+</section>
+
+</div></div>
+
+<div id="ui">
+  <button id="prev" title="Anterior (←)" aria-label="Anterior">‹</button>
+  <div id="dots"></div>
+  <button id="next" title="Siguiente (→)" aria-label="Siguiente">›</button>
+  <span id="cnt">1 / 14</span>
+  <button id="ovb" title="Vista general (O)" aria-label="Vista general">⊞</button>
+  <button id="fsb" title="Pantalla completa (F)" aria-label="Pantalla completa">⛶</button>
+</div>
+
+<script>
+(function(){
+  var S=[].slice.call(document.querySelectorAll('.slide')), W=document.getElementById('world');
+  var N=S.length, cur=0, cam=null, raf=0, ov=false;
+  S.forEach(function(el){var d=el.dataset;el._p={x:+d.x,y:+d.y,s:+(d.s||1),r:+(d.r||0)};
+    el.style.transform='translate('+(el._p.x-800)+'px,'+(el._p.y-450)+'px) rotate('+el._p.r+'deg) scale('+el._p.s+')';});
+
+  /* fondo del "lienzo": camino entre diapositivas, marco de configuración y etiquetas de zona */
+  (function(){
+    var ns='http://www.w3.org/2000/svg', x0=-1400,y0=-1100,w=13900,h=7000;
+    var svg=document.createElementNS(ns,'svg');svg.id='bg';
+    svg.setAttribute('width',w);svg.setAttribute('height',h);svg.setAttribute('viewBox',x0+' '+y0+' '+w+' '+h);
+    svg.style.left=x0+'px';svg.style.top=y0+'px';
+    var d='M'+S[0]._p.x+' '+S[0]._p.y;
+    for(var i=1;i<N;i++){var a=S[i-1]._p,b=S[i]._p,mx=(a.x+b.x)/2,my=(a.y+b.y)/2;d+=' Q'+a.x+' '+my+' '+mx+' '+my+' T'+b.x+' '+b.y;}
+    svg.innerHTML='<rect x="8350" y="1560" width="3100" height="1230" rx="90" fill="#F7E8EE" stroke="#7A0026" stroke-width="8" stroke-dasharray="40 22"/>'+
+      '<text x="8460" y="1700" font-size="88" font-weight="800" fill="#7A0026" letter-spacing="6">CONFIGURACIÓN PASO A PASO</text>'+
+      '<path d="'+d+'" fill="none" stroke="#A3123F" stroke-opacity=".35" stroke-width="14" stroke-dasharray="2 34" stroke-linecap="round"/>'+
+      '<text x="2700" y="-640" font-size="150" font-weight="800" fill="#7A0026" fill-opacity=".14" letter-spacing="10">FUNDAMENTOS</text>'+
+      '<text x="8400" y="3520" font-size="150" font-weight="800" fill="#7A0026" fill-opacity=".14" letter-spacing="10">VERIFICACIÓN</text>'+
+      '<text x="500" y="3520" font-size="150" font-weight="800" fill="#7A0026" fill-opacity=".14" letter-spacing="10">CIERRE</text>'+
+      '<text x="-1100" y="2350" font-size="120" font-weight="800" fill="#7A0026" fill-opacity=".12" class="mono">FF02::A</text>'+
+      '<text x="4300" y="2400" font-size="120" font-weight="800" fill="#7A0026" fill-opacity=".12" class="mono">ipv6 eigrp 1</text>';
+    W.insertBefore(svg,W.firstChild);
+  })();
+
+  function vp(){var w=innerWidth,h=innerHeight,b=56;return{f:Math.min((w-28)/1600,(h-b-18)/900),cx:w/2,cy:(h-b)/2+6};}
+  function tgt(i){var p=S[i]._p;return{x:p.x,y:p.y,z:1/p.s,r:p.r};}
+  function ovCam(){var a=1e9,b=1e9,c=-1e9,e=-1e9;S.forEach(function(el){var p=el._p,hw=800*p.s+120,hh=450*p.s+120;
+      a=Math.min(a,p.x-hw);b=Math.min(b,p.y-hh);c=Math.max(c,p.x+hw);e=Math.max(e,p.y+hh);});
+    return{x:(a+c)/2,y:(b+e)/2,z:Math.min(1600/(c-a),900/(e-b)),r:0};}
+  function apply(c){var v=vp(),k=v.f*c.z;cam=c;
+    W.style.transform='translate('+v.cx+'px,'+v.cy+'px) scale('+k+') rotate('+(-c.r)+'deg) translate('+(-c.x)+'px,'+(-c.y)+'px)';}
+  function fly(to){
+    cancelAnimationFrame(raf);if(!cam){apply(to);return;}
+    var f={x:cam.x,y:cam.y,z:cam.z,r:cam.r},dist=Math.hypot(to.x-f.x,to.y-f.y),
+        dip=Math.min(1.05,dist/3000),dur=dist>3000?1400:1150,t0=performance.now(),l0=Math.log(f.z),l1=Math.log(to.z);
+    function step(now){var t=Math.min(1,(now-t0)/dur),e=t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+      apply({x:f.x+(to.x-f.x)*e,y:f.y+(to.y-f.y)*e,r:f.r+(to.r-f.r)*e,z:Math.exp(l0+(l1-l0)*e-dip*Math.sin(Math.PI*t))});
+      if(t<1)raf=requestAnimationFrame(step);else apply(to);}
+    raf=requestAnimationFrame(step);}
+
+  var dots=document.getElementById('dots');
+  S.forEach(function(el,i){var b=document.createElement('button');b.title=(i+1)+'. '+el.dataset.title;b.setAttribute('aria-label',b.title);
+    b.onclick=function(ev){ev.stopPropagation();go(i);};dots.appendChild(b);});
+  function ui(){[].forEach.call(dots.children,function(b,i){b.classList.toggle('act',i===cur&&!ov);});
+    document.getElementById('cnt').textContent=ov?'vista':(cur+1)+' / '+N;
+    document.getElementById('bar').style.width=((cur+1)/N*100)+'%';}
+  function go(i,instant){i=Math.max(0,Math.min(N-1,i));cur=i;ov=false;document.body.classList.remove('ov');
+    S.forEach(function(el,j){el.classList.toggle('on',j===i);});
+    instant?apply(tgt(i)):fly(tgt(i));ui();
+    try{history.replaceState(null,'','#'+(i+1));}catch(e){}}
+  function overview(){if(ov){go(cur);return;}ov=true;document.body.classList.add('ov');fly(ovCam());ui();}
+  function next(){ov?go(cur):go(cur+1);} function prev(){ov?go(cur):go(cur-1);}
+
+  document.getElementById('next').onclick=function(e){e.stopPropagation();next();};
+  document.getElementById('prev').onclick=function(e){e.stopPropagation();prev();};
+  document.getElementById('ovb').onclick=function(e){e.stopPropagation();overview();};
+  document.getElementById('fsb').onclick=function(e){e.stopPropagation();
+    if(!document.fullscreenElement){(document.documentElement.requestFullscreen||function(){}).call(document.documentElement);}else{document.exitFullscreen();}};
+  document.getElementById('ui').addEventListener('click',function(e){e.stopPropagation();});
+  document.getElementById('stage').addEventListener('click',function(e){
+    if(e.target.closest('a'))return;
+    if(ov){var s=e.target.closest('.slide');if(s)go(S.indexOf(s));return;}
+    if(e.clientX<innerWidth*0.18)prev();else next();});
+  addEventListener('keydown',function(e){var k=e.key;
+    if(k==='ArrowRight'||k==='ArrowDown'||k==='PageDown'||k===' '||k==='Enter'){e.preventDefault();next();}
+    else if(k==='ArrowLeft'||k==='ArrowUp'||k==='PageUp'||k==='Backspace'){e.preventDefault();prev();}
+    else if(k==='Home'){go(0);}else if(k==='End'){go(N-1);}
+    else if(k==='o'||k==='O'||k==='Escape'){if(k==='Escape'&&!ov)return;overview();}
+    else if(k==='f'||k==='F'){document.getElementById('fsb').click();}});
+  var lock=0;
+  addEventListener('wheel',function(e){e.preventDefault();var now=Date.now(),dv=Math.abs(e.deltaY)>Math.abs(e.deltaX)?e.deltaY:e.deltaX;
+    if(now<lock||Math.abs(dv)<6)return;lock=now+800;dv>0?next():prev();},{passive:false});
+  var tx=null,ty=null;
+  addEventListener('touchstart',function(e){tx=e.touches[0].clientX;ty=e.touches[0].clientY;},{passive:true});
+  addEventListener('touchend',function(e){if(tx===null)return;var dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;
+    if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy))dx<0?next():prev();tx=null;},{passive:true});
+  addEventListener('resize',function(){if(cam)apply(ov?ovCam():tgt(cur));});
+  addEventListener('hashchange',function(){var n=parseInt(location.hash.slice(1),10);if(n>=1&&n<=N&&n-1!==cur)go(n-1);});
+  setTimeout(function(){document.getElementById('hint').style.opacity=0;},7000);
+
+  var n0=parseInt(location.hash.slice(1),10);go(n0>=1&&n0<=N?n0-1:0,true);
+  if(/[?&]vista/.test(location.search)){ov=true;document.body.classList.add('ov');apply(ovCam());ui();}
+
+  /* modo de autoverificación: ?check → reporta contenido desbordado */
+  if(/[?&]check/.test(location.search)){
+    var out=[];
+    W.style.transform='none';
+    S.forEach(function(el,i){el.style.transform='none';
+      var R=el.getBoundingClientRect();
+      [].forEach.call(el.querySelectorAll('*'),function(n){
+        if(n.closest('svg')&&n.tagName.toLowerCase()!=='svg')return;
+        var r=n.getBoundingClientRect();if(!r.width&&!r.height)return;
+        if(r.right>R.right+1||r.bottom>R.bottom+1||r.left<R.left-1||r.top<R.top-1)out.push('S'+(i+1)+' fuera: '+n.tagName+'.'+n.className+' '+Math.round(r.right-R.left)+'x'+Math.round(r.bottom-R.top));
+        if(n.scrollWidth>n.clientWidth+2&&getComputedStyle(n).overflow!=='visible'&&n.clientWidth)out.push('S'+(i+1)+' recorte-x: '+n.tagName+'.'+n.className);
+        if(n.scrollHeight>n.clientHeight+2&&getComputedStyle(n).overflow!=='visible'&&n.clientHeight)out.push('S'+(i+1)+' recorte-y: '+n.tagName+'.'+n.className);
+      });
+      /* hijos directos del cuerpo no deben pasar del borde inferior del cuerpo */
+      var sb=el.querySelector('.sb');if(sb){var B=sb.getBoundingClientRect();
+        [].forEach.call(sb.querySelectorAll('*'),function(n){if(n.closest('svg')&&n.tagName.toLowerCase()!=='svg')return;var r=n.getBoundingClientRect();
+          if(r.height&&(r.bottom>B.bottom+1||r.right>B.right+1))out.push('S'+(i+1)+' sale del cuerpo: '+n.tagName+'.'+n.className+' bottom+'+Math.round(r.bottom-B.bottom)+' right+'+Math.round(r.right-B.right));});}
+    });
+    var pre=document.createElement('pre');pre.id='report';pre.textContent='CHECK\n'+(out.length?out.join('\n'):'SIN PROBLEMAS');document.body.appendChild(pre);
+    /* prueba de navegación: teclado, rueda, vista general */
+    S.forEach(function(el){var p=el._p;el.style.transform='translate('+(p.x-800)+'px,'+(p.y-450)+'px) rotate('+p.r+'deg) scale('+p.s+')';});
+    function log(t){pre.textContent+='\n'+t+' -> cur='+(cur+1)+' ov='+ov+' hash='+location.hash+' on='+(S.indexOf(document.querySelector('.slide.on'))+1);}
+    go(0,true);
+    setTimeout(function(){dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight'}));},100);
+    setTimeout(function(){log('tecla →');dispatchEvent(new KeyboardEvent('keydown',{key:' '}));},1800);
+    setTimeout(function(){log('espacio');document.getElementById('stage').dispatchEvent(new MouseEvent('click',{bubbles:true,clientX:innerWidth*0.8,clientY:300}));},3500);
+    setTimeout(function(){log('clic');dispatchEvent(new WheelEvent('wheel',{deltaY:120,cancelable:true}));},5200);
+    setTimeout(function(){log('rueda');dispatchEvent(new KeyboardEvent('keydown',{key:'o'}));},6900);
+    setTimeout(function(){log('vista general');document.getElementById('dots').children[9].click();},8600);
+    setTimeout(function(){log('punto 10');pre.textContent+='\nFIN';},10300);
+  }
+})();
+</script>
+</body>
+</html>
